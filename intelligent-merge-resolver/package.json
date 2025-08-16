@@ -12,7 +12,8 @@
     "test": "npm run test:python && npm run test:js",
     "test:python": "echo 'Run python tests via CI'",
     "test:js": "node -e \"console.log('js tests placeholder')\"",
-    "dev": "node bin/merge-resolve.js --dev"
+    "dev": "node bin/merge-resolve.js --dev",
+    "server": "node server.js"
   },
   "keywords": [
     "git", "merge", "conflict", "ai", "terminal", "tui", "nextjs"
@@ -20,6 +21,7 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "commander": "^11.0.0",
     "chalk": "^5.3.0",
     "ora": "^7.0.1",
@@ -42,6 +44,7 @@
     "hooks/",
     "requirements.txt",
     "pyproject.toml",
-    "install.js"
+    "install.js",
+    "server.js"
   ]
 }

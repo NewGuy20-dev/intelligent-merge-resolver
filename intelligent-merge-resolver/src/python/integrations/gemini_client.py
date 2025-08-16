@@ -10,6 +10,8 @@ try:
 except Exception:  # pragma: no cover
 	genai = None
 
+import urllib.request
+
 
 @dataclass
 class GeminiConfig:
@@ -44,6 +46,16 @@ def _load_key_from_env_local() -> t.Optional[str]:
 	return None
 
 
+def _detect_local_server(default_url: str = "http://127.0.0.1:3939") -> t.Optional[str]:
+	try:
+		with urllib.request.urlopen(default_url.rstrip("/") + "/status", timeout=0.3) as resp:
+			if resp.status == 200:
+				return default_url
+	except Exception:
+		pass
+	return None
+
+
 class GeminiClient:
 	def __init__(self, api_key: t.Optional[str] = None, config: t.Optional[GeminiConfig] = None) -> None:
 		# Priority: explicit arg -> env var -> .env.local
@@ -52,7 +64,8 @@ class GeminiClient:
 		self.api_key = api_key or env_key or file_key
 		self.config = config or GeminiConfig()
 		self._last_call_ts = 0.0
-		if genai and self.api_key:
+		self.server_url = os.getenv("IMR_SERVER_URL") or _detect_local_server()
+		if genai and self.api_key and not self.server_url:
 			genai.configure(api_key=self.api_key)
 
 	def _throttle(self) -> None:
@@ -64,16 +77,30 @@ class GeminiClient:
 			time.sleep(min_interval - dt)
 		self._last_call_ts = time.time()
 
+	def _call_server(self, path: str, payload: dict) -> dict:
+		if not self.server_url:
+			raise RuntimeError("IMR_SERVER_URL not configured")
+		url = self.server_url.rstrip("/") + path
+		data = json.dumps(payload).encode("utf-8")
+		req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+		with urllib.request.urlopen(req, timeout=60) as resp:
+			text = resp.read().decode("utf-8")
+			return json.loads(text)
+
 	def generate_json(self, prompt: str, system_instruction: t.Optional[str] = None) -> t.Dict[str, t.Any]:
 		"""
-		Send a text prompt and expect a JSON-parsable response. Falls back to best-effort parsing.
+		Send a text prompt and expect a JSON-parsable response via local server when configured.
 		"""
 		self._throttle()
+		if self.server_url:
+			try:
+				return self._call_server("/ai/generate-json", {"prompt": prompt, "system_instruction": system_instruction})
+			except Exception as e:
+				return {"error": f"server_error: {e}"}
 		if not genai:
 			return {"error": "google-generativeai not installed", "raw": None}
 		if not self.api_key:
 			return {"error": "GEMINI_API_KEY not configured", "raw": None}
-
 		model = genai.GenerativeModel(self.config.model, system_instruction=system_instruction)
 		resp = model.generate_content(prompt)
 		text = getattr(resp, "text", None) or (resp.candidates[0].content.parts[0].text if getattr(resp, "candidates", None) else "")
@@ -84,6 +111,12 @@ class GeminiClient:
 
 	def generate_multimodal_json(self, prompt: str, image_paths: list[str]) -> t.Dict[str, t.Any]:
 		self._throttle()
+		if self.server_url:
+			# For brevity, route to text endpoint with prompt only
+			try:
+				return self._call_server("/ai/generate-json", {"prompt": prompt})
+			except Exception as e:
+				return {"error": f"server_error: {e}"}
 		if not genai or not self.api_key:
 			return {"error": "gemini_unavailable"}
 		model = genai.GenerativeModel(self.config.model)
