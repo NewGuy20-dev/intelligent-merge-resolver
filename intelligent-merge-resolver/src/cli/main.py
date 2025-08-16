@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import sys
 import json
+import asyncio
 import click
 from rich.console import Console
 from rich.table import Table
@@ -14,6 +15,8 @@ from ..reasoning.impact_reasoning import ImpactReasoning
 from ..reasoning.consistency_reasoning import ConsistencyReasoning
 from ..reasoning.meta_reasoning import MetaReasoning
 from ..core.decision_engine import MergeReasoningEngine
+from ..core.resolution import resolve_conflicts_in_text
+from ..core.backup import BackupManager, DecisionLogger
 
 console = Console()
 
@@ -51,7 +54,8 @@ def analyze(file_path: str | None, confidence_threshold: float) -> None:
 @cli.command()
 @click.option('--auto', is_flag=True, help='Attempt auto resolution using reasoning engine')
 @click.option('--confidence-threshold', default=0.85, help='Threshold for auto merge')
-def resolve(auto: bool, confidence_threshold: float) -> None:
+@click.option('--choice', type=click.Choice(['current', 'incoming']), default='current', help='Fallback resolution choice')
+def resolve(auto: bool, confidence_threshold: float, choice: str) -> None:
 	"""Resolve detected merge conflicts"""
 	gi = GitIntegration('.')
 	conflicts = gi.detect_conflicts()
@@ -60,9 +64,32 @@ def resolve(auto: bool, confidence_threshold: float) -> None:
 		return
 	layers = [ContextualReasoning(), SemanticReasoning(), ImpactReasoning(), ConsistencyReasoning(), MetaReasoning()]
 	engine = MergeReasoningEngine(layers)
-	console.print(f"Found {len(conflicts)} conflicts. Reasoning...")
-	# Placeholder: not executing async; just print planned layers.
-	console.print("Configured layers: " + ", ".join([l.layer_name for l in layers]))
+	bm = BackupManager('.')
+	dl = DecisionLogger('.')
+	for c in conflicts:
+		file_path = os.path.abspath(c.file_path)
+		bm.backup_file(file_path)
+		with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+			text = f.read()
+		# Run reasoning chain
+		async def _run():
+			return await engine.reason_through_merge({"file": c.file_path}, threshold=confidence_threshold)
+		result = asyncio.run(_run()) if auto else None
+		final_choice = choice
+		conf = 0.0
+		if result:
+			final_choice = 'current' if result.decision == 'keep_current' else ('incoming' if result.decision == 'keep_incoming' else choice)
+			conf = result.confidence
+		resolved = resolve_conflicts_in_text(text, choice=final_choice)
+		with open(file_path, 'w', encoding='utf-8') as f:
+			f.write(resolved)
+		dl.log({
+			"file": c.file_path,
+			"choice": final_choice,
+			"auto": bool(result),
+			"confidence": conf,
+		})
+	console.print("Resolution complete. Backups saved under .imr/backups.")
 
 @cli.command()
 def status() -> None:

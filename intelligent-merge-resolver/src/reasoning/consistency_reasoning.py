@@ -4,14 +4,14 @@ from ..integrations.gemini_client import GeminiClient
 class ConsistencyReasoning:
 	layer_name = "consistency"
 
-	def __init__(self) -> None:
-		self.gemini = GeminiClient()
+	def __init__(self, gemini_client: GeminiClient | None = None) -> None:
+		self.gemini = gemini_client or GeminiClient()
 
 	async def analyze(self, reasoning_context):
 		prompt = f"""
 		[LAYER] REASONING PHASE: CONSISTENCY
 		Previous Context: {reasoning_context.get_previous_reasoning()}
-		Respond JSON with consistency_analysis, consistency_reasoning_chain, consistency_confidence.
+		Respond JSON with keys: consistency_analysis, consistency_reasoning_chain, consistency_confidence
 		"""
 		resp = self.gemini.generate_json(prompt)
 		reasoning_context.add_reasoning_layer(self.layer_name, resp)
