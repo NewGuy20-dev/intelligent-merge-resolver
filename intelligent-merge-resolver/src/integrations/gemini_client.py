@@ -52,3 +52,21 @@ class GeminiClient:
 			return json.loads(text)
 		except Exception:
 			return {"raw": text}
+
+	def generate_multimodal_json(self, prompt: str, image_paths: list[str]) -> t.Dict[str, t.Any]:
+		self._throttle()
+		if not genai or not self.api_key:
+			return {"error": "gemini_unavailable"}
+		model = genai.GenerativeModel(self.config.model)
+		parts: list[t.Any] = [prompt]
+		for p in image_paths:
+			try:
+				parts.append({"mime_type": "image/png", "data": open(p, "rb").read()})
+			except Exception:
+				continue
+		resp = model.generate_content(parts)
+		text = getattr(resp, "text", None) or ""
+		try:
+			return json.loads(text)
+		except Exception:
+			return {"raw": text}
