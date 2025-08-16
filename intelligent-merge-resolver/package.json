@@ -18,7 +18,7 @@
   "keywords": [
     "git", "merge", "conflict", "ai", "terminal", "tui", "nextjs"
   ],
-  "author": "Your Name",
+  "author": "Gautham",
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
