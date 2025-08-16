@@ -1,23 +1,47 @@
 {
   "name": "intelligent-merge-resolver",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "AI-powered merge conflict resolver with multi-layer reasoning and visual analysis",
-  "main": "src/analyzers/ui_analyzer.js",
-  "engines": { "node": ">=16" },
-  "scripts": {
-    "build": "echo 'No build step'",
-    "test": "node --version && echo 'JS smoke tests are run via python harness'"
+  "description": "AI-powered merge conflict resolution with terminal UI",
+  "main": "bin/merge-resolve.js",
+  "bin": {
+    "merge-resolve": "./bin/merge-resolve.js",
+    "imr": "./bin/imr.js"
   },
+  "scripts": {
+    "postinstall": "node install.js",
+    "test": "npm run test:python && npm run test:js",
+    "test:python": "echo 'Run python tests via CI'",
+    "test:js": "node -e \"console.log('js tests placeholder')\"",
+    "dev": "node bin/merge-resolve.js --dev"
+  },
+  "keywords": [
+    "git", "merge", "conflict", "ai", "terminal", "tui", "nextjs"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "commander": "^9.0.0",
-    "yaml": "^2.0.0",
-    "fs-extra": "^11.0.0",
-    "chalk": "^5.0.0",
-    "ora": "^6.0.0"
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "cross-spawn": "^7.0.3"
   },
   "optionalDependencies": {
     "puppeteer": "^21.0.0"
-  }
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "python": ">=3.8.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "config/",
+    "hooks/",
+    "requirements.txt",
+    "pyproject.toml",
+    "install.js"
+  ]
 }

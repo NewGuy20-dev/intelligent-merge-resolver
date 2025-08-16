@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intelligent-merge-resolver-core"
+version = "0.1.0"
+description = "Core Python engine for intelligent merge resolution"
+dependencies = [
+	"textual>=0.50.0",
+	"rich>=13.0.0",
+	"click>=8.0.0",
+	"gitpython>=3.1.0",
+	"google-generativeai>=0.3.0",
+	"pytesseract>=0.3.10",
+	"opencv-python>=4.8.0",
+	"chromadb>=0.4.0",
+	"pyyaml>=6.0",
+	"python-syntax-highlight>=1.0.0",
+	"Pillow>=10.0.0",
+]
+
+[project.scripts]
+merge-resolve-core = "src.python.cli.main:main"
