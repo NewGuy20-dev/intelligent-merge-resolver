@@ -1,0 +1,23 @@
+project:
+  name: "Intelligent Merge Resolver"
+  type: "python"
+
+preferences:
+  ui_style: "modern"
+  code_style: "mixed"
+  accessibility: "high"
+
+reasoning:
+  enable_visual_analysis: false
+  enable_context_analysis: true
+  confidence_threshold: 0.85
+  max_context_size: 50000
+
+build:
+  dev_command: ""
+  build_command: ""
+  test_routes: ["/", "/dashboard", "/settings"]
+
+gemini:
+  model: "gemini-2.0-flash-exp"
+  max_tokens: 8192

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Placeholder post-merge hook for Intelligent Merge Resolver
+exit 0

@@ -1,0 +1,27 @@
+project:
+  name: "Sample Project"
+  type: "react"
+
+preferences:
+  ui_style: "modern"
+  code_style: "functional"
+  accessibility: "high"
+
+reasoning:
+  enable_visual_analysis: true
+  enable_context_analysis: true
+  confidence_threshold: 0.85
+  max_context_size: 50000
+
+build:
+  dev_command: "npm run dev"
+  build_command: "npm run build"
+  test_routes: ["/", "/dashboard", "/settings"]
+
+gemini:
+  model: "gemini-2.0-flash-exp"
+  max_tokens: 8192
+
+inherit:
+  puppeteer_config: "./tests/puppeteer.config.js"
+  test_routes: "./tests/routes.config.js"

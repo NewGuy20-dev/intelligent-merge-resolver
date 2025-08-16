@@ -1,0 +1,23 @@
+{
+  "name": "intelligent-merge-resolver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-powered merge conflict resolver with multi-layer reasoning and visual analysis",
+  "main": "src/analyzers/ui_analyzer.js",
+  "engines": { "node": ">=16" },
+  "scripts": {
+    "build": "echo 'No build step'",
+    "test": "node --version && echo 'JS smoke tests are run via python harness'"
+  },
+  "dependencies": {
+    "commander": "^9.0.0",
+    "yaml": "^2.0.0",
+    "fs-extra": "^11.0.0",
+    "chalk": "^5.0.0",
+    "ora": "^6.0.0"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}
