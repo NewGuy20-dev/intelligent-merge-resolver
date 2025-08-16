@@ -5,11 +5,11 @@
 
 ## Subtasks
 - [ ] Phase 1: Core Foundation
-  - [ ] Scaffold repository structure and configs
-  - [ ] Implement Git integration and conflict detection
-  - [ ] Implement Gemini client with structured reasoning stubs
-  - [ ] Implement CLI interface and configuration loading
-  - [ ] Implement simple code analysis without visual components
+  - [x] Scaffold repository structure and configs
+  - [x] Implement Git integration and conflict detection (stubs + CLI)
+  - [x] Implement Gemini client with structured reasoning stubs
+  - [x] Implement CLI interface and configuration loading
+  - [x] Implement simple code analysis without visual components
 - [ ] Phase 2: Reasoning Engine
   - [ ] Implement 6 reasoning layers and reasoning chain
   - [ ] Context management and compression
