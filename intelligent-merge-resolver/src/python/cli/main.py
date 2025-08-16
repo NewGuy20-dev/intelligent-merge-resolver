@@ -17,6 +17,7 @@ from ..core.conflict_analyzer import ConflictAnalyzer
 from ..core.decision_engine import MergeReasoningEngine
 from ..reasoning.contextual_reasoning import ContextualReasoning
 from ..reasoning.semantic_reasoning import SemanticReasoning
+from ..reasoning.visual_reasoning import VisualReasoning
 from ..reasoning.impact_reasoning import ImpactReasoning
 from ..reasoning.consistency_reasoning import ConsistencyReasoning
 from ..reasoning.meta_reasoning import MetaReasoning
@@ -24,6 +25,14 @@ from ..core.resolution import resolve_conflicts_in_text
 from ..core.backup import BackupManager, DecisionLogger
 
 console = Console()
+
+class LearningManager:
+	def __init__(self, repo_path: str) -> None:
+		self.path = os.path.join(repo_path, '.imr', 'learning.jsonl')
+		os.makedirs(os.path.dirname(self.path), exist_ok=True)
+	def record(self, decision: dict) -> None:
+		with open(self.path, 'a', encoding='utf-8') as f:
+			f.write(json.dumps(decision) + '\n')
 
 @click.group()
 @click.version_option(version="0.1.0")
@@ -33,6 +42,7 @@ def cli(ctx) -> None:
 	ctx.ensure_object(dict)
 	ctx.obj['git_integration'] = GitIntegration('.')
 	ctx.obj['js_bridge'] = JavaScriptBridge() if JavaScriptBridge else None
+	ctx.obj['learn'] = LearningManager('.')
 
 @cli.command()
 @click.option('--project-type', default=None, help='Project type (nextjs, react, vue, etc.)')
@@ -69,11 +79,12 @@ def analyze(ctx, file_path: str | None, confidence_threshold: float) -> None:
 @click.pass_context
 def resolve(ctx, auto: bool, confidence_threshold: float, choice: str) -> None:
 	gi: GitIntegration = ctx.obj['git_integration']
+	learn: LearningManager = ctx.obj['learn']
 	conflicts = gi.detect_conflicts()
 	if not conflicts:
 		console.print("No conflicts detected.")
 		return
-	layers = [ContextualReasoning(), SemanticReasoning(), ImpactReasoning(), ConsistencyReasoning(), MetaReasoning()]
+	layers = [ContextualReasoning(), SemanticReasoning(), VisualReasoning(), ImpactReasoning(), ConsistencyReasoning(), MetaReasoning()]
 	engine = MergeReasoningEngine(layers)
 	bm = BackupManager('.')
 	dl = DecisionLogger('.')
@@ -93,7 +104,9 @@ def resolve(ctx, auto: bool, confidence_threshold: float, choice: str) -> None:
 		resolved = resolve_conflicts_in_text(text, choice=final_choice)
 		with open(file_path, 'w', encoding='utf-8') as f:
 			f.write(resolved)
-		dl.log({"file": c.file_path, "choice": final_choice, "auto": bool(result), "confidence": conf})
+		rec = {"file": c.file_path, "choice": final_choice, "auto": bool(result), "confidence": conf}
+		dl.log(rec)
+		learn.record({"decision": rec, "layers": getattr(result, 'context_snapshot', {}) if result else {}})
 	console.print("Resolution complete. Backups saved under .imr/backups.")
 
 @cli.command()
