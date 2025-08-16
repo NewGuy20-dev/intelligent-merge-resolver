@@ -1,7 +1,14 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const chalk = require('chalk');
+
+let _chalk;
+async function getChalk() {
+	if (_chalk) return _chalk;
+	const mod = await import('chalk');
+	_chalk = mod.default;
+	return _chalk;
+}
 
 async function checkPython() {
 	const pythonCmds = ['python3', 'python'];
@@ -19,6 +26,7 @@ async function checkPython() {
 }
 
 async function installPythonDeps(pythonCmd) {
+	const chalk = await getChalk();
 	console.log(chalk.blue('📦 Installing Python dependencies...'));
 	return new Promise((resolve, reject) => {
 		const child = spawn(pythonCmd, ['-m', 'pip', 'install', '-r', 'requirements.txt'], {
@@ -52,6 +60,7 @@ async function detectProjectType() {
 }
 
 async function main() {
+	const chalk = await getChalk();
 	try {
 		console.log(chalk.cyan('🚀 Setting up Intelligent Merge Resolver...'));
 		const pythonCmd = await checkPython();
@@ -71,9 +80,12 @@ async function main() {
 		}
 		console.log(chalk.green('🎉 Setup complete! Run "npx merge-resolve --help" to get started.'));
 	} catch (error) {
+		const chalk = await getChalk();
 		console.error(chalk.red('❌ Installation failed:'), error.message);
 		process.exit(1);
 	}
 }
 
-main();
+if (require.main === module) {
+	main();
+}
