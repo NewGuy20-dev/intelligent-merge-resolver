@@ -18,9 +18,38 @@ class GeminiConfig:
 	rate_limit_qps: float = 2.0
 
 
+def _load_key_from_env_local() -> t.Optional[str]:
+	"""
+	Load GEMINI_API_KEY from a .env.local file in the current working directory.
+	Simple KEY=VALUE parser with support for quoted values.
+	"""
+	path = os.path.join(os.getcwd(), ".env.local")
+	if not os.path.isfile(path):
+		return None
+	try:
+		with open(path, "r", encoding="utf-8", errors="ignore") as f:
+			for raw in f:
+				line = raw.strip()
+				if not line or line.startswith("#"):
+					continue
+				if "=" not in line:
+					continue
+				key, value = line.split("=", 1)
+				key = key.strip()
+				val = value.strip().strip('"').strip("'")
+				if key == "GEMINI_API_KEY" and val:
+					return val
+	except Exception:
+		return None
+	return None
+
+
 class GeminiClient:
 	def __init__(self, api_key: t.Optional[str] = None, config: t.Optional[GeminiConfig] = None) -> None:
-		self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+		# Priority: explicit arg -> env var -> .env.local
+		env_key = os.getenv("GEMINI_API_KEY")
+		file_key = _load_key_from_env_local()
+		self.api_key = api_key or env_key or file_key
 		self.config = config or GeminiConfig()
 		self._last_call_ts = 0.0
 		if genai and self.api_key:
