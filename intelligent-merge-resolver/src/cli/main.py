@@ -8,6 +8,8 @@ from rich.console import Console
 from rich.table import Table
 from .utils.config_loader import load_config
 from ..integrations.git_integration import GitIntegration
+from ..integrations.ui_capture import capture_ui_states
+from ..analyzers.ocr_analyzer import OCRAnalyzer
 from ..reasoning.contextual_reasoning import ContextualReasoning
 from ..reasoning.semantic_reasoning import SemanticReasoning
 from ..reasoning.visual_reasoning import VisualReasoning
@@ -50,6 +52,21 @@ def analyze(file_path: str | None, confidence_threshold: float) -> None:
 		gi = GitIntegration('.')
 		conflicts = gi.detect_conflicts()
 		console.print(json.dumps([c.__dict__ for c in conflicts], indent=2))
+
+@cli.command()
+@click.option('--base-url', default='http://localhost:3000', help='Base URL to capture')
+@click.option('--routes', multiple=True, default=['/'], help='Routes to capture')
+@click.option('--out-dir', default='screenshots', help='Output directory')
+def visual(base_url: str, routes: tuple[str, ...], out_dir: str) -> None:
+	"""Capture UI states and run OCR analysis"""
+	res = capture_ui_states('.', base_url, list(routes), out_dir)
+	console.print(json.dumps(res, indent=2))
+	if 'results' in res:
+		ocr = OCRAnalyzer()
+		ocr_results = {}
+		for r in res['results']:
+			ocr_results[r['file']] = ocr.analyze(r['file'])
+		console.print(json.dumps(ocr_results, indent=2))
 
 @cli.command()
 @click.option('--auto', is_flag=True, help='Attempt auto resolution using reasoning engine')
