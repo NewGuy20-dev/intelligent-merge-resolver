@@ -1,0 +1,13 @@
+project:
+  type: "generic"
+
+preferences:
+  ui_style: "modern"
+  code_style: "functional"
+  accessibility: "high"
+
+reasoning:
+  enable_visual_analysis: true
+  enable_context_analysis: true
+  confidence_threshold: 0.85
+  max_context_size: 50000
